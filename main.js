@@ -7,6 +7,9 @@ var lastMovement = "None";
 
 // https://stackoverflow.com/questions/12153357/how-to-register-document-onkeypress-event
 function inputKeyPressed(event) {
+
+    updateSnakeHead();
+
     const keyCode = event.keyCode;
     // enums for valid button keycodes
     const buttonKeys = {
@@ -74,54 +77,50 @@ function inputKeyPressed(event) {
 }
 
 var snakeArray = [];
-function increaseSize() {
-    const element = document.querySelector('.screen');
-    const xHeadPos = calculatePositionOfHead().x;
-    const yHeadPos = calculatePositionOfHead().y;
-
-    const index = snakeArray.length + 1;
-    snakeArray.push(index);
-    // storePositionOfBody(xHeadPos, yHeadPos); // TODO: storeBodyPositionHere
-
-    const xBodyPos = calculatePositionOfNewBody(xHeadPos, yHeadPos).x;
-    const yBodyPos = calculatePositionOfNewBody(xHeadPos, yHeadPos).y;
-
-    // https://stackoverflow.com/questions/5677799/how-to-append-data-to-div-using-javascript
-    // TODO: make width dynamically?
-    element.innerHTML += '<div id="body' + index + '" style="background-color: orange; position:absolute; width:18px; height:18px; margin-left:' + xBodyPos + 'px; margin-top:' + yBodyPos + 'px; border: black solid 1px;"></div>';
+function updateSnakeHead() {
+    const headPosition = calculatePositionOfHead();
+    snakeArray[0] = headPosition;
+    console.log(snakeArray);
 }
 
-function calculatePositionOfNewBody(headX, headY) {
-    const element = document.querySelector('.player');
-    const style = getComputedStyle(element);
-    
-    const blockWidth = parseInt(style.width);
-    const size = snakeArray.length;
+function updateSnakeBody() {
+    for (let i = 1; i < snakeArray.length; i++) {
+        snakeArray[i] = snakeArray[i - 1];
+    }
+}
 
+function increaseSize() {
+    const element = document.querySelector('.screen');
+    const tailPosition = snakeArray[snakeArray.length-1];
+    const tailX = tailPosition.x;
+    const tailY = tailPosition.y;
+
+    let newTailX, newTailY;
     // Using 20 instead of blockWidth, doesn't appear to matter visually??
     if (lastMovement == "Right") {
-        let xBodyPos = 20 * size;
-        xBodyPos = headX - xBodyPos;
-        const yBodyPos = headY;
-        return {x: xBodyPos, y: yBodyPos}
+        newTailX = tailX - 20;
+        newTailY = tailY;
     } else if (lastMovement == "Left") {
-        let xBodyPos = blockWidth * size;
-        xBodyPos = headX + xBodyPos;
-        const yBodyPos = headY;
-        return {x: xBodyPos, y: yBodyPos}
+        newTailX = tailX + 20;
+        newTailY = tailY;
     } else if (lastMovement == "Up") {
-        let yBodyPos = 20 * size;
-        yBodyPos = headY + yBodyPos;
-        const xBodyPos = headX;
-        return {x: xBodyPos, y: yBodyPos}
+        newTailY = tailY - 20;
+        newTailX = tailX;
     } else if (lastMovement == "Down") {
-        let yBodyPos = 20 * size;
-        yBodyPos = headY - yBodyPos;
-        const xBodyPos = headX;
-        return {x: xBodyPos, y: yBodyPos}
+        newTailY = tailY + 20;
+        newTailX = tailX;
     } else {
         // Maybe start the game off with downmovement?
     }
+
+    const newBody = {x: newTailX, y: newTailY};
+    snakeArray.push(newBody);
+
+    const index = snakeArray.length - 1;
+
+    // https://stackoverflow.com/questions/5677799/how-to-append-data-to-div-using-javascript
+    // TODO: make width dynamically?
+    element.innerHTML += '<div id="body' + index + '" style="background-color: orange; position:absolute; width:18px; height:18px; margin-left:' + newTailX + 'px; margin-top:' + newTailY + 'px; border: black solid 1px;"></div>';
 }
 
 function calculatePositionOfHead() {
@@ -135,14 +134,17 @@ function calculatePositionOfHead() {
 }
 
 function rightMovement() {
+    updateSnakeHead();
+    updateSnakeBody();
+    for (let i = 1; i < snakeArray.length; i++) {
+        const bodyXPos = snakeArray[i].x;
+        const bodyYPos = snakeArray[i].y;
+        document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
+        document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+    }
     const headPosition = calculatePositionOfHead();
     const xPos = headPosition.x;
     const yPos = headPosition.y;
-
-    const tailPosition = calculatePositionOfNewBody(xPos, yPos);
-    const xTailPos = tailPosition.x;
-    const yTailPos = tailPosition.y;
-
 
     // console.log(xPos);
     // Keep this as 20, width of player + outline
@@ -159,28 +161,11 @@ function rightMovement() {
         alert("Game over!");
         clearInterval(intervalFunction);
         newXPos = xPos;
-        // newXPos = 0;
     }
 
     document.getElementById('player').style.marginLeft = newXPos + 'px';
-    for (let i = 1; i <= snakeArray.length; i++) {
-        const bodyXPos = newXPos - (i * 20);
-        document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-        
-        // console.log(yPos);
-        // console.log(yTailPos); Didn't work
-        // TODO, need two movements ago or use tailPosition
-        if (yPos > yTailPos) { // Two movements ago was "Up"
-            const bodyYPos = yPos - (i * 20);
-            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-        } else if (yPos < yTailPos) { // Two movements ago was "Down"
-            console.log("ran");
-            const bodyYPos = yPos + (i * 20);
-            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-        } else {
 
-        }
-    }
+
 }
 
 // https://zellwk.com/blog/css-values-in-js/
@@ -205,10 +190,9 @@ function leftMovement() {
     }
 
     document.getElementById('player').style.marginLeft = newXPos + 'px';
-    for (let i = 1; i <= snakeArray.length; i++) {
-        const bodyXPos = newXPos + (i * 20);
-        document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-    }
+
+    updateSnakeHead();
+    updateSnakeBody();
 }
 
 function upMovement() {
@@ -225,10 +209,9 @@ function upMovement() {
     }
 
     document.getElementById('player').style.marginTop = newYPos + 'px';
-    for (let i = 1; i <= snakeArray.length; i++) {
-        const bodyYPos = newYPos + (i * 20);
-        document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-    }
+
+    updateSnakeHead();
+    updateSnakeBody();
 }
 
 function downMovement() {
@@ -246,8 +229,12 @@ function downMovement() {
     }
 
     document.getElementById('player').style.marginTop = newYPos + 'px';
-    for (let i = 1; i <= snakeArray.length; i++) {
-        const bodyYPos = newYPos - (i * 20);
-        document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-    }
+    
+    updateSnakeHead();
+    updateSnakeBody();
+    
+    // for (let i = 1; i <= snakeArray.length; i++) {
+    //     const bodyYPos = newYPos - (i * 20);
+    //     document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+    // }
 }
