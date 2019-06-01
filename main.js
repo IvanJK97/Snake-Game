@@ -8,8 +8,6 @@ var lastMovement = "None";
 // https://stackoverflow.com/questions/12153357/how-to-register-document-onkeypress-event
 function inputKeyPressed(event) {
 
-    updateSnakeHead();
-
     const keyCode = event.keyCode;
     // enums for valid button keycodes
     const buttonKeys = {
@@ -76,19 +74,6 @@ function inputKeyPressed(event) {
     }
 }
 
-var snakeArray = [];
-function updateSnakeHead() {
-    const headPosition = calculatePositionOfHead();
-    snakeArray[0] = headPosition;
-    console.log(snakeArray);
-}
-
-function updateSnakeBody() {
-    for (let i = 1; i < snakeArray.length; i++) {
-        snakeArray[i] = snakeArray[i - 1];
-    }
-}
-
 function increaseSize() {
     const element = document.querySelector('.screen');
     const tailPosition = snakeArray[snakeArray.length-1];
@@ -104,10 +89,10 @@ function increaseSize() {
         newTailX = tailX + 20;
         newTailY = tailY;
     } else if (lastMovement == "Up") {
-        newTailY = tailY - 20;
+        newTailY = tailY + 20;
         newTailX = tailX;
     } else if (lastMovement == "Down") {
-        newTailY = tailY + 20;
+        newTailY = tailY - 20;
         newTailX = tailX;
     } else {
         // Maybe start the game off with downmovement?
@@ -133,15 +118,20 @@ function calculatePositionOfHead() {
     return {x: xPos, y: yPos};
 }
 
-function rightMovement() {
-    updateSnakeHead();
-    updateSnakeBody();
-    for (let i = 1; i < snakeArray.length; i++) {
-        const bodyXPos = snakeArray[i].x;
-        const bodyYPos = snakeArray[i].y;
-        document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-        document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+var snakeArray = [];
+function updateSnakeHeadInArray() {
+    const headPosition = calculatePositionOfHead();
+    snakeArray[0] = headPosition;
+    console.log(snakeArray);
+}
+
+function updateSnakeBodyInArray() {
+    for (let i = snakeArray.length - 1; i >= 1; i--) {
+        snakeArray[i] = snakeArray[i - 1];
     }
+}
+
+function rightMovement() {
     const headPosition = calculatePositionOfHead();
     const xPos = headPosition.x;
     const yPos = headPosition.y;
@@ -150,53 +140,61 @@ function rightMovement() {
     // Keep this as 20, width of player + outline
     let newXPos = xPos + 20;
 
-    // TODO: maybe set blockWidth as global var for DRY, or maybe get rid
-    const element = document.querySelector('.player');
-    const style = getComputedStyle(element);
-    const blockWidth = parseInt(style.width);
-    
     const playerRight = newXPos + 20;
     // check if player's right edge is outside of screen
     if (playerRight > 500) {
         alert("Game over!");
         clearInterval(intervalFunction);
         newXPos = xPos;
+    } else {
+        document.getElementById('player').style.marginLeft = newXPos + 'px';
+
+        updateSnakeBodyInArray();
+        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
+    
+        for (let i = 1; i < snakeArray.length; i++) {
+            const bodyXPos = snakeArray[i].x;
+            const bodyYPos = snakeArray[i].y;
+            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
+            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
     }
-
-    document.getElementById('player').style.marginLeft = newXPos + 'px';
-
-
 }
 
 // https://zellwk.com/blog/css-values-in-js/
 function leftMovement() {
-    const xPos = calculatePositionOfHead().x;
-    // console.log(xPos);
-    let newXPos = xPos - 20;
+    const headPosition = calculatePositionOfHead();
+    const xPos = headPosition.x;
+    const yPos = headPosition.y;
 
-    // TODO: maybe set blockWidth as global var for DRY
-    const element = document.querySelector('.player');
-    const style = getComputedStyle(element);
-    const blockWidth = parseInt(style.width);
+    let newXPos = xPos - 20;
 
     const playerLeft = newXPos;
     // check if player's left edge is outside of screen
     if (playerLeft < 0) {
         alert("Game over!");
-        // Stop the player and set position to edge of screen
         clearInterval(intervalFunction);
         newXPos = xPos;
-        // newXPos = 480;
+    } else {
+        document.getElementById('player').style.marginLeft = newXPos + 'px';
+
+        updateSnakeBodyInArray();
+        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
+    
+        for (let i = 1; i < snakeArray.length; i++) {
+            const bodyXPos = snakeArray[i].x;
+            const bodyYPos = snakeArray[i].y;
+            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
+            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
     }
-
-    document.getElementById('player').style.marginLeft = newXPos + 'px';
-
-    updateSnakeHead();
-    updateSnakeBody();
 }
 
 function upMovement() {
-    const yPos = calculatePositionOfHead().y;
+    const headPosition = calculatePositionOfHead();
+    const xPos = headPosition.x;
+    const yPos = headPosition.y;
+
     let newYPos = yPos - 20;
 
     const playerTop = newYPos;
@@ -205,36 +203,49 @@ function upMovement() {
         alert("Game over!");
         clearInterval(intervalFunction);
         newYPos = yPos;
-        // newYPos = 480;
+    } else {
+        document.getElementById('player').style.marginTop = newYPos + 'px';
+
+        updateSnakeBodyInArray();
+        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
+    
+        for (let i = 1; i < snakeArray.length; i++) {
+            const bodyXPos = snakeArray[i].x;
+            const bodyYPos = snakeArray[i].y;
+            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
+            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
     }
-
-    document.getElementById('player').style.marginTop = newYPos + 'px';
-
-    updateSnakeHead();
-    updateSnakeBody();
 }
 
 function downMovement() {
-    const yPos = calculatePositionOfHead().y;
-    let newYPos = yPos + 20;
-    
-    //TODO: change 20 to height of player
-    const playerBottom = newYPos + 20;
+    const headPosition = calculatePositionOfHead();
+    const xPos = headPosition.x;
+    const yPos = headPosition.y;
+
+    let newYPos = yPos + 20; // +20 for new position
+
+    const playerBottom = newYPos + 20; // + 20 for position + height of square
     // check if player's bottom edge is outside of screen
     if (playerBottom > 500) {
         alert("Game over!");
         clearInterval(intervalFunction);
         newYPos = yPos;
-        // newYPos = 0;
-    }
+    } else {
+        document.getElementById('player').style.marginTop = newYPos + 'px';
 
-    document.getElementById('player').style.marginTop = newYPos + 'px';
+        updateSnakeBodyInArray();
+        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
     
-    updateSnakeHead();
-    updateSnakeBody();
+        for (let i = 1; i < snakeArray.length; i++) {
+            const bodyXPos = snakeArray[i].x;
+            const bodyYPos = snakeArray[i].y;
+            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
+            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
+    }
+}
+
+function collideWithSelf() {
     
-    // for (let i = 1; i <= snakeArray.length; i++) {
-    //     const bodyYPos = newYPos - (i * 20);
-    //     document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-    // }
 }
