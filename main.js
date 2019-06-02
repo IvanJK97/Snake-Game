@@ -1,9 +1,14 @@
 // Following the rules of https://playsnake.org/
-
 document.addEventListener("keydown", inputKeyPressed, false);
 
 var intervalFunction;
 var lastMovement = "None";
+let applePosition = {};
+
+// https://stackoverflow.com/questions/2632137/why-is-document-getelementbyid-returning-null
+window.onload = function() {
+    generateApple();
+}
 
 // https://stackoverflow.com/questions/12153357/how-to-register-document-onkeypress-event
 function inputKeyPressed(event) {
@@ -122,7 +127,6 @@ var snakeArray = [];
 function updateSnakeHeadInArray() {
     const headPosition = calculatePositionOfHead();
     snakeArray[0] = headPosition;
-    console.log(snakeArray);
 }
 
 function updateSnakeBodyInArray() {
@@ -146,6 +150,7 @@ function rightMovement() {
         alert("Game over!");
         clearInterval(intervalFunction);
         newXPos = xPos;
+        location.reload();
     } else {
         document.getElementById('player').style.marginLeft = newXPos + 'px';
 
@@ -157,6 +162,20 @@ function rightMovement() {
             const bodyYPos = snakeArray[i].y;
             document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
             document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
+
+        if (didCollideWithSelf()) {
+            alert("Game over!");
+            clearInterval(intervalFunction);
+            newXPos = xPos;
+            location.reload();
+            // document.getElementById('player').style.marginLeft = newXPos + 'px';
+        }
+
+        if (didCollideWithApple()) {
+            removeApple();
+            increaseSize();
+            generateApple();
         }
     }
 }
@@ -175,6 +194,7 @@ function leftMovement() {
         alert("Game over!");
         clearInterval(intervalFunction);
         newXPos = xPos;
+        location.reload();
     } else {
         document.getElementById('player').style.marginLeft = newXPos + 'px';
 
@@ -186,6 +206,19 @@ function leftMovement() {
             const bodyYPos = snakeArray[i].y;
             document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
             document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
+
+        if (didCollideWithSelf()) {
+            alert("Game over!");
+            clearInterval(intervalFunction);
+            newXPos = xPos;
+            location.reload();
+        }
+
+        if (didCollideWithApple()) {
+            removeApple();
+            increaseSize();
+            generateApple();
         }
     }
 }
@@ -203,6 +236,7 @@ function upMovement() {
         alert("Game over!");
         clearInterval(intervalFunction);
         newYPos = yPos;
+        location.reload();
     } else {
         document.getElementById('player').style.marginTop = newYPos + 'px';
 
@@ -214,6 +248,19 @@ function upMovement() {
             const bodyYPos = snakeArray[i].y;
             document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
             document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+        }
+
+        if (didCollideWithSelf()) {
+            alert("Game over!");
+            clearInterval(intervalFunction);
+            newYPos = yPos;
+            location.reload();
+        }
+
+        if (didCollideWithApple()) {
+            removeApple();
+            increaseSize();
+            generateApple();
         }
     }
 }
@@ -231,6 +278,7 @@ function downMovement() {
         alert("Game over!");
         clearInterval(intervalFunction);
         newYPos = yPos;
+        location.reload();
     } else {
         document.getElementById('player').style.marginTop = newYPos + 'px';
 
@@ -243,9 +291,62 @@ function downMovement() {
             document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
             document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
         }
+
+        if (didCollideWithSelf()) {
+            alert("Game over!");
+            clearInterval(intervalFunction);
+            newYPos = yPos;
+            location.reload();
+        }
+
+        if (didCollideWithApple()) {
+            removeApple();
+            increaseSize();
+            generateApple();
+        }
     }
 }
 
-function collideWithSelf() {
+function didCollideWithSelf() {
+    //https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+    // console.log(snakeArray);
+    const headPosition = snakeArray[0]
+    let didCollideWithSelf = false;
+    for (let i = 1; i < snakeArray.length; i++) {
+        if (headPosition.x == snakeArray[i].x && headPosition.y == snakeArray[i].y) {
+            didCollideWithSelf = true;
+            break;
+        }
+    }
+    return didCollideWithSelf;
+}
+
+function generateApple() {
+    var min = 0;
+    var max = 25;
+    // https://www.geeksforgeeks.org/javascript-math-random-function/
+    var randomX = Math.floor(Math.random() * (max - min) + min) * 20;
+    var randomY = Math.floor(Math.random() * (max - min) + min) * 20;
     
+    applePosition["x"] = randomX;
+    applePosition["y"] = randomY;
+    console.log(applePosition);
+    const element = document.getElementById('screen');
+    element.innerHTML += '<div id="apple" style="background-color: red; position:absolute; width:20px; height:20px; margin-left:' + randomX + 'px; margin-top:' + randomY + 'px;"></div>';
+}
+
+function removeApple() {
+    // https://www.w3schools.com/jsref/met_node_removechild.asp
+    const apple = document.getElementById("apple");
+    const parent = document.querySelector('.screen');
+    console.log(parent.removeChild(apple));
+}
+
+function didCollideWithApple() {
+    const headPosition = snakeArray[0]
+    let didCollideWithApple = false;
+    if (headPosition.x == applePosition.x && headPosition.y == applePosition.y) {
+        didCollideWithApple = true;
+    }
+    return didCollideWithApple;
 }
