@@ -282,31 +282,33 @@ function rightMovement() {
     }
 }
 
-// Run when snake collides with apple, adds a new segment to the snake
+// Run when snake collides with apple, adds a new segment to the snake using lastPosition
 // TODO: need to save an extra in snakeArray for this
 function increaseSize() {
     const element = document.querySelector('.screen');
-    const tailPosition = snakeArray[snakeArray.length-1];
-    const tailX = tailPosition.x;
-    const tailY = tailPosition.y;
+    // const tailPosition = snakeArray[snakeArray.length-1];
+    // const tailX = tailPosition.x;
+    // const tailY = tailPosition.y;
 
     let newTailX, newTailY;
-    // Using 20 instead of blockWidth, doesn't appear to matter visually??
-    if (lastMovement == "Right") {
-        newTailX = tailX - 20;
-        newTailY = tailY;
-    } else if (lastMovement == "Left") {
-        newTailX = tailX + 20;
-        newTailY = tailY;
-    } else if (lastMovement == "Up") {
-        newTailY = tailY + 20;
-        newTailX = tailX;
-    } else if (lastMovement == "Down") {
-        newTailY = tailY - 20;
-        newTailX = tailX;
-    } else {
-        // Maybe start the game off with downmovement?
-    }
+    newTailX = lastPosition.x;
+    newTailY = lastPosition.y;
+    // // Using 20 instead of blockWidth, doesn't appear to matter visually??
+    // if (lastMovement == "Right") {
+    //     newTailX = tailX - 20;
+    //     newTailY = tailY;
+    // } else if (lastMovement == "Left") {
+    //     newTailX = tailX + 20;
+    //     newTailY = tailY;
+    // } else if (lastMovement == "Up") {
+    //     newTailY = tailY + 20;
+    //     newTailX = tailX;
+    // } else if (lastMovement == "Down") {
+    //     newTailY = tailY - 20;
+    //     newTailX = tailX;
+    // } else {
+    //     // Maybe start the game off with downmovement?
+    // }
 
     const newBody = {x: newTailX, y: newTailY};
     snakeArray.push(newBody);
@@ -334,7 +336,10 @@ function updateSnakeHeadInArray() {
     snakeArray[0] = headPosition;
 }
 
+var lastPosition = {};
 function updateSnakeBodyInArray() {
+    // Store lastPosition for when snake increase size to be added here
+    lastPosition = snakeArray[snakeArray.length - 1];
     for (let i = snakeArray.length - 1; i >= 1; i--) {
         snakeArray[i] = snakeArray[i - 1];
     }
