@@ -1,13 +1,13 @@
 // Trying to follow the rules of https://playsnake.org/
-    
-// TODO: make width dynamically?
 
 // Global variables
-let intervalFunction;       // Keeps track of the movement function we repeatedly call to shift the snake
-let lastMovement = "None";  // Keeps track of the last key the user pressed in a string
-let applePosition = {};     // Empty applePosition with x and y key values to be filled by generateApple() in window.onload
-let snakeArray = [];        // An array of objects keeping track of the position of each segment of the snake, object each have x and y value
-let lastPosition = {};      // Stores the last position of snake in updateSnakeBody() for adding new segments onto the snake in increaseSize()
+let intervalFunction;               // Keeps track of the movement function we repeatedly call to shift the snake
+let lastMovement = "None";          // Keeps track of the last key the user pressed in a string
+let movementBeforePause = "None";
+let applePosition = {};             // Empty applePosition with x and y key values to be filled by generateApple() in window.onload
+let snakeArray = [];                // An array of objects keeping track of the position of each segment of the snake, object each have x and y value
+let lastPosition = {};              // Stores the last position of snake in updateSnakeBody() for adding new segments onto the snake in increaseSize()
+let squareSize = 20;                // Width and height of each grid coordinate of screen and snake's segment (including outline)
 
 // Run this function on start of game, when all the elements of the page is loaded
 // https://stackoverflow.com/questions/2632137/why-is-document-getelementbyid-returning-null
@@ -21,11 +21,11 @@ window.onload = function() {
     // Snake has length of 3 on start of game
     const body1Position = {
         x: headPosition.x,
-        y: headPosition.y - 20
+        y: headPosition.y - squareSize
     }
     const body2Position = {
         x: headPosition.x,
-        y: headPosition.y - 40
+        y: headPosition.y - (squareSize * 2)
     }
 
     snakeArray[0] = headPosition;
@@ -55,7 +55,16 @@ function inputKeyPressed(event) {
     if (keyCode == buttonKeys.UPARROW) {
         if (lastMovement == "Up" || lastMovement == "Down") {
             // Can't move vertically if already moving vertically
-        } else {
+        } else if (lastMovement == "Space") {
+            // Game was just paused, can go up unless movementBeforePause was down
+            if (movementBeforePause != "Down") {
+                clearInterval(intervalFunction);
+                setTimeout(upMovement, 250);
+                intervalFunction = setInterval(upMovement, 500);
+                lastMovement = "Up";
+            }
+        } 
+        else {
             // Clear running previous movement function that was set at an interval
             clearInterval(intervalFunction);
             
@@ -72,7 +81,17 @@ function inputKeyPressed(event) {
     else if (keyCode == buttonKeys.DOWNARROW) {
         if (lastMovement == "Up" || lastMovement == "Down") {
             // Can't move vertically if already moving vertically
-        } else {
+        }
+        else if (lastMovement == "Space") {
+            // Game was just paused, can go down unless movementBeforePause was up
+            if (movementBeforePause != "Up") {
+                clearInterval(intervalFunction);
+                setTimeout(downMovement, 250);
+                intervalFunction = setInterval(downMovement, 500);
+                lastMovement = "Down";
+            }
+        }
+        else {
             // clear previous movements and do initial call of down movement with 250ms delay
             clearInterval(intervalFunction);
             setTimeout(downMovement, 250);
@@ -83,7 +102,17 @@ function inputKeyPressed(event) {
     else if (keyCode == buttonKeys.LEFTARROW) {
         if (lastMovement == "Right" || lastMovement == "Left") {
             // Can't move horizontally if already moving horizontally
-        } else {
+        }
+        else if (lastMovement == "Space") {
+            // Game was just paused, can go left unless movementBeforePause was right
+            if (movementBeforePause != "Right") {
+                clearInterval(intervalFunction);
+                setTimeout(leftMovement, 250);
+                intervalFunction = setInterval(leftMovement, 500);
+                lastMovement = "Left";
+            }
+        }
+        else {
             clearInterval(intervalFunction);
             setTimeout(leftMovement, 250);
             intervalFunction = setInterval(leftMovement, 500);
@@ -93,7 +122,17 @@ function inputKeyPressed(event) {
     else if (keyCode == buttonKeys.RIGHTARROW) {
         if (lastMovement == "Right" || lastMovement == "Left") {
             // Can't move horizontally if already moving horizontally
-        } else {
+        }
+        else if (lastMovement == "Space") {
+            // Game was just paused, can go right unless movementBeforePause was left
+            if (movementBeforePause != "Left") {
+                clearInterval(intervalFunction);
+                setTimeout(rightMovement, 250);
+                intervalFunction = setInterval(rightMovement, 500);
+                lastMovement = "Right";
+            }
+        }
+        else {
         clearInterval(intervalFunction);
         setTimeout(rightMovement, 250);
         intervalFunction = setInterval(rightMovement, 500);
@@ -103,7 +142,9 @@ function inputKeyPressed(event) {
     else if (keyCode == buttonKeys.SPACEBAR) {
         // Pauses the game by clearing previous movement function
         alert("Paused! Try arrow keys to restart.");
-        // lastMovement = "Space"
+        // Need to store movement before pausing, presents a problem if moving left, pause/unpause, then move right
+        movementBeforePause = lastMovement;
+        lastMovement = "Space";
         clearInterval(intervalFunction);
     }
     else {
@@ -120,7 +161,7 @@ function upMovement() {
     const yPos = headPosition.y;
 
     // Up movement means that marginTop px value will decrease, want to decrease by 20px (size of square) each frame
-    let newYPos = yPos - 20;
+    let newYPos = yPos - squareSize;
 
     const playerTop = newYPos;
     // Check if player's top edge is outside of screen, end the game if it is
@@ -187,13 +228,13 @@ function downMovement() {
     const yPos = headPosition.y;
 
     // Down movement means that marginTop px value will increase each frame
-    let newYPos = yPos + 20; 
+    let newYPos = yPos + squareSize; 
 
-    // + 20 for position + height of square
-    const playerBottom = newYPos + 20;
+    // + squareSize is for position + height of square
+    const playerBottom = newYPos + squareSize;
     // check if player's bottom edge is outside of screen
     if (playerBottom > 500) {
-        alert("Game over!");
+        alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
         location.reload();
     } else {
@@ -210,12 +251,12 @@ function leftMovement() {
     const yPos = headPosition.y;
 
     // Left movement means that marginLeft px value will decrease each frame
-    let newXPos = xPos - 20;
+    let newXPos = xPos - squareSize;
 
     const playerLeft = newXPos;
     // check if player's left edge is outside of screen
     if (playerLeft < 0) {
-        alert("Game over!");
+        alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
         location.reload();
     } else {
@@ -232,13 +273,13 @@ function rightMovement() {
     const yPos = headPosition.y;
 
     // Right movement means that marginLeft px value will increase each frame
-    let newXPos = xPos + 20;
+    let newXPos = xPos + squareSize;
 
-    // + 20 for position + width of square
-    const playerRight = newXPos + 20;
+    // + squareSize is for position + width of square
+    const playerRight = newXPos + squareSize;
     // check if player's right edge is outside of screen
     if (playerRight > 500) {
-        alert("Game over!");
+        alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
         location.reload();
     } else {
@@ -254,7 +295,7 @@ function checkCollisionWithSelfAndApple() {
     // The other way to lose the game is by colliding with self
     if (didCollideWithSelf()) {
         // Stop any movement functions and refresh page 
-        alert("Game over!");
+        alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
         location.reload();
     }
@@ -316,10 +357,10 @@ function generateApple() {
     const min = 0;
     const max = 25;
 
-    // Use random function to find a number between 0 and 25, and then multiply by 20 (offset or size of square) to get the actual x and y position
+    // Use random function to find a number between 0 and 25, and then multiply by squareSize (offset or size of square) to get the actual x and y position
     // https://www.geeksforgeeks.org/javascript-math-random-function/
-    const randomXPosition = Math.floor(Math.random() * (max - min) + min) * 20;
-    const randomYPosition = Math.floor(Math.random() * (max - min) + min) * 20;
+    const randomXPosition = Math.floor(Math.random() * (max - min) + min) * squareSize;
+    const randomYPosition = Math.floor(Math.random() * (max - min) + min) * squareSize;
     
     applePosition["x"] = randomXPosition;
     applePosition["y"] = randomYPosition;
