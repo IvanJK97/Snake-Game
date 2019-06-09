@@ -2,6 +2,11 @@
 Browser version of the classic minigame "Snake". Will be done just using plain HTML, JavaScript, CSS. Goal is to get the apple without colliding with snake's body or edge of screen.
 You can play the game by cloning the repo, extracting it, and clicking on the HTML file. This should then launch on the browser.
 
+Short gif of the game.
+![](GameDemo.gif)
+
+Please let me know if there are any issues, bugs, improvements, or questions about this! This has been a fun practice and I hope to make more games in the future.
+
 **Steps in making the game:** 
 * First, I need the basic visual components of the game, which initially is the screen and the player. At this point, everything is static, so I have two HTML divs, one for the screen and one for the player. For styling, I made the screen black, gave it a round number width and height (500px). For the player, I gave it an orange color and 20px for width and height.
 * Next, I needed to be able to register user input, specifically the arrow keys. A quick Google search brought me to: https://stackoverflow.com/questions/12153357/how-to-register-document-onkeypress-event , which tells me the syntax for keydown event listener and I Googled the rest of the key codes for arrow keys as well as Space and Enter. I just consoled log something to test if they worked when pressed.
@@ -26,5 +31,3 @@ Possible Improvements:
 * Styling for the screen
 * Difficulty settings adjusting speed of the snake
 * Score keeping
-
-Please let me know if there are any issues, bugs, improvements, or questions about this! This has been a fun practice and I hope to make more games in the future
