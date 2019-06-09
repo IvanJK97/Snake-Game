@@ -1,9 +1,13 @@
 // Trying to follow the rules of https://playsnake.org/
+    
+// TODO: make width dynamically?
 
 // Global variables
 let intervalFunction;       // Keeps track of the movement function we repeatedly call to shift the snake
 let lastMovement = "None";  // Keeps track of the last key the user pressed in a string
 let applePosition = {};     // Empty applePosition with x and y key values to be filled by generateApple() in window.onload
+let snakeArray = [];        // An array of objects keeping track of the position of each segment of the snake, object each have x and y value
+let lastPosition = {};      // Stores the last position of snake in updateSnakeBody() for adding new segments onto the snake in increaseSize()
 
 // Run this function on start of game, when all the elements of the page is loaded
 // https://stackoverflow.com/questions/2632137/why-is-document-getelementbyid-returning-null
@@ -14,6 +18,7 @@ window.onload = function() {
     // Start the game with snake moving downwards
     downMovement();
     const headPosition = calculatePositionOfHead();
+    // Snake has length of 3 on start of game
     const body1Position = {
         x: headPosition.x,
         y: headPosition.y - 20
@@ -23,7 +28,6 @@ window.onload = function() {
         y: headPosition.y - 40
     }
 
-    // Snake has length of 3 on start of game
     snakeArray[0] = headPosition;
     snakeArray[1] = body1Position;
     snakeArray[2] = body2Position;
@@ -52,7 +56,7 @@ function inputKeyPressed(event) {
         if (lastMovement == "Up" || lastMovement == "Down") {
             // Can't move vertically if already moving vertically
         } else {
-            // Stop running previous movement function that was set at an interval
+            // Clear running previous movement function that was set at an interval
             clearInterval(intervalFunction);
             
             // Call upMovement with 250ms delay
@@ -69,6 +73,7 @@ function inputKeyPressed(event) {
         if (lastMovement == "Up" || lastMovement == "Down") {
             // Can't move vertically if already moving vertically
         } else {
+            // clear previous movements and do initial call of down movement with 250ms delay
             clearInterval(intervalFunction);
             setTimeout(downMovement, 250);
             intervalFunction = setInterval(downMovement, 500);
@@ -79,7 +84,6 @@ function inputKeyPressed(event) {
         if (lastMovement == "Right" || lastMovement == "Left") {
             // Can't move horizontally if already moving horizontally
         } else {
-            // clear previous movements and do initial call of left movement with 250ms delay
             clearInterval(intervalFunction);
             setTimeout(leftMovement, 250);
             intervalFunction = setInterval(leftMovement, 500);
@@ -98,8 +102,8 @@ function inputKeyPressed(event) {
     }
     else if (keyCode == buttonKeys.SPACEBAR) {
         // Pauses the game by clearing previous movement function
-        alert("Paused! Press arrow keys to restart.");
-        lastMovement = "Space"
+        alert("Paused! Try arrow keys to restart.");
+        // lastMovement = "Space"
         clearInterval(intervalFunction);
     }
     else {
@@ -108,220 +112,39 @@ function inputKeyPressed(event) {
 
 /*  Function for when up arrow key is pressed. Updates snake position in snakeArray as well as 
     visually in HTML. Checks if snake is outside of screen, collides with itself, or collides with
-    apple.
-*/
+    apple. */
 function upMovement() {
+    // First, call calculatePositionOfHead to get its position
     const headPosition = calculatePositionOfHead();
     const xPos = headPosition.x;
     const yPos = headPosition.y;
 
+    // Up movement means that marginTop px value will decrease, want to decrease by 20px (size of square) each frame
     let newYPos = yPos - 20;
 
     const playerTop = newYPos;
-    // check if player's top edge is outside of screen
+    // Check if player's top edge is outside of screen, end the game if it is
     if (playerTop < 0) {
-        alert("Game over!");
+        // First way to lose the game is by going out of bounds
+        alert("Game over! Game will restart if you click ok.");
+        // Stop any movement functions and refresh page 
         clearInterval(intervalFunction);
-        newYPos = yPos;
         location.reload();
     } else {
-        // https://zellwk.com/blog/css-values-in-js/
-        document.getElementById('player').style.marginTop = newYPos + 'px';
-
-        updateSnakeBodyInArray();
-        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
-    
-        for (let i = 1; i < snakeArray.length; i++) {
-            const bodyXPos = snakeArray[i].x;
-            const bodyYPos = snakeArray[i].y;
-            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-        }
-
-        if (didCollideWithSelf()) {
-            alert("Game over!");
-            clearInterval(intervalFunction);
-            newYPos = yPos;
-            location.reload();
-        }
-
-        if (didCollideWithApple()) {
-            removeApple();
-            increaseSize();
-            generateApple();
-        }
+        const newHeadPosition = {x: xPos, y: newYPos};
+        /*  Updates snake array by setting each index to be the index in front of it so snake "moves forward" and snake head in array with new position
+            After updating snake body in array, each segment of the snake is updated visually to reflect the up movement */
+        updateSnakeBody(newHeadPosition);
     }
+
+    // Check if snake's head has collided with any body segments or the apple
+    checkCollisionWithSelfAndApple();
 }
 
-function downMovement() {
-    const headPosition = calculatePositionOfHead();
-    const xPos = headPosition.x;
-    const yPos = headPosition.y;
-
-    let newYPos = yPos + 20; // +20 for new position
-
-    const playerBottom = newYPos + 20; // + 20 for position + height of square
-    // check if player's bottom edge is outside of screen
-    if (playerBottom > 500) {
-        alert("Game over!");
-        clearInterval(intervalFunction);
-        newYPos = yPos;
-        location.reload();
-    } else {
-        document.getElementById('player').style.marginTop = newYPos + 'px';
-
-        updateSnakeBodyInArray();
-        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
-    
-        for (let i = 1; i < snakeArray.length; i++) {
-            const bodyXPos = snakeArray[i].x;
-            const bodyYPos = snakeArray[i].y;
-            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-        }
-
-        if (didCollideWithSelf()) {
-            alert("Game over!");
-            clearInterval(intervalFunction);
-            newYPos = yPos;
-            location.reload();
-        }
-
-        if (didCollideWithApple()) {
-            removeApple();
-            increaseSize();
-            generateApple();
-        }
-    }
-}
-
-function leftMovement() {
-    const headPosition = calculatePositionOfHead();
-    const xPos = headPosition.x;
-    const yPos = headPosition.y;
-
-    let newXPos = xPos - 20;
-
-    const playerLeft = newXPos;
-    // check if player's left edge is outside of screen
-    if (playerLeft < 0) {
-        alert("Game over!");
-        clearInterval(intervalFunction);
-        newXPos = xPos;
-        location.reload();
-    } else {
-        document.getElementById('player').style.marginLeft = newXPos + 'px';
-
-        updateSnakeBodyInArray();
-        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
-    
-        for (let i = 1; i < snakeArray.length; i++) {
-            const bodyXPos = snakeArray[i].x;
-            const bodyYPos = snakeArray[i].y;
-            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-        }
-
-        if (didCollideWithSelf()) {
-            alert("Game over!");
-            clearInterval(intervalFunction);
-            newXPos = xPos;
-            location.reload();
-        }
-
-        if (didCollideWithApple()) {
-            removeApple();
-            increaseSize();
-            generateApple();
-        }
-    }
-}
-
-function rightMovement() {
-    const headPosition = calculatePositionOfHead();
-    const xPos = headPosition.x;
-    const yPos = headPosition.y;
-
-    // console.log(xPos);
-    // Keep this as 20, width of player + outline
-    let newXPos = xPos + 20;
-
-    const playerRight = newXPos + 20;
-    // check if player's right edge is outside of screen
-    if (playerRight > 500) {
-        alert("Game over!");
-        clearInterval(intervalFunction);
-        newXPos = xPos;
-        location.reload();
-    } else {
-        document.getElementById('player').style.marginLeft = newXPos + 'px';
-
-        updateSnakeBodyInArray();
-        updateSnakeHeadInArray(); //TODO, maybe we can pass in new position directly
-    
-        for (let i = 1; i < snakeArray.length; i++) {
-            const bodyXPos = snakeArray[i].x;
-            const bodyYPos = snakeArray[i].y;
-            document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
-            document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
-        }
-
-        if (didCollideWithSelf()) {
-            alert("Game over!");
-            clearInterval(intervalFunction);
-            newXPos = xPos;
-            location.reload();
-            // document.getElementById('player').style.marginLeft = newXPos + 'px';
-        }
-
-        if (didCollideWithApple()) {
-            removeApple();
-            increaseSize();
-            generateApple();
-        }
-    }
-}
-
-// Run when snake collides with apple, adds a new segment to the snake using lastPosition
-// TODO: need to save an extra in snakeArray for this
-function increaseSize() {
-    const element = document.querySelector('.screen');
-    // const tailPosition = snakeArray[snakeArray.length-1];
-    // const tailX = tailPosition.x;
-    // const tailY = tailPosition.y;
-
-    let newTailX, newTailY;
-    newTailX = lastPosition.x;
-    newTailY = lastPosition.y;
-    // // Using 20 instead of blockWidth, doesn't appear to matter visually??
-    // if (lastMovement == "Right") {
-    //     newTailX = tailX - 20;
-    //     newTailY = tailY;
-    // } else if (lastMovement == "Left") {
-    //     newTailX = tailX + 20;
-    //     newTailY = tailY;
-    // } else if (lastMovement == "Up") {
-    //     newTailY = tailY + 20;
-    //     newTailX = tailX;
-    // } else if (lastMovement == "Down") {
-    //     newTailY = tailY - 20;
-    //     newTailX = tailX;
-    // } else {
-    //     // Maybe start the game off with downmovement?
-    // }
-
-    const newBody = {x: newTailX, y: newTailY};
-    snakeArray.push(newBody);
-
-    const index = snakeArray.length - 1;
-
-    // https://stackoverflow.com/questions/5677799/how-to-append-data-to-div-using-javascript
-    // TODO: make width dynamically?
-    element.innerHTML += '<div id="body' + index + '" style="background-color: orange; position:absolute; width:18px; height:18px; margin-left:' + newTailX + 'px; margin-top:' + newTailY + 'px; border: black solid 1px;"></div>';
-}
-
+// Returns what the position object of the snake's head is
 function calculatePositionOfHead() {
     const element = document.querySelector('.player');
+    // Get the style properties of snake's head (marginTop, marginLeft)
     const style = getComputedStyle(element);
 
     const xPos = parseInt(style.marginLeft);
@@ -330,25 +153,124 @@ function calculatePositionOfHead() {
     return {x: xPos, y: yPos};
 }
 
-var snakeArray = [];
-function updateSnakeHeadInArray() {
-    const headPosition = calculatePositionOfHead();
-    snakeArray[0] = headPosition;
-}
-
-var lastPosition = {};
-function updateSnakeBodyInArray() {
-    // Store lastPosition for when snake increase size to be added here
+//
+function updateSnakeBody(newHeadPosition) {
+    // Store lastPosition of snake for when snake increase size to be added here, must do this before loop below
     lastPosition = snakeArray[snakeArray.length - 1];
+    
+    // Update the position of the snake in the snakeArray **KEY CONCEPT
+    // Loop from end of snake to head, setting each index to be the index in front of it
+    // This follows the idea that each segment follows what is in front of it (the snake's body follow the snake)
     for (let i = snakeArray.length - 1; i >= 1; i--) {
         snakeArray[i] = snakeArray[i - 1];
     }
+    // Lastly, set snake's head to new head position passed as a parameter by the movement functions
+    snakeArray[0] = newHeadPosition;
+
+    // https://zellwk.com/blog/css-values-in-js/
+    // Updates the location of snake's head visually
+    document.getElementById('player').style.marginLeft = newHeadPosition.x + 'px';
+    document.getElementById('player').style.marginTop = newHeadPosition.y + 'px';
+    
+    // Update the location of snake's body visually
+    for (let i = 1; i < snakeArray.length; i++) {
+        const bodyXPos = snakeArray[i].x;
+        const bodyYPos = snakeArray[i].y;
+        document.getElementById('body' + i).style.marginLeft = bodyXPos + 'px';
+        document.getElementById('body' + i).style.marginTop = bodyYPos + 'px';
+    }
 }
 
+function downMovement() {
+    const headPosition = calculatePositionOfHead();
+    const xPos = headPosition.x;
+    const yPos = headPosition.y;
+
+    // Down movement means that marginTop px value will increase each frame
+    let newYPos = yPos + 20; 
+
+    // + 20 for position + height of square
+    const playerBottom = newYPos + 20;
+    // check if player's bottom edge is outside of screen
+    if (playerBottom > 500) {
+        alert("Game over!");
+        clearInterval(intervalFunction);
+        location.reload();
+    } else {
+        const newHeadPosition = {x: xPos, y: newYPos};
+        updateSnakeBody(newHeadPosition); 
+    }
+
+    checkCollisionWithSelfAndApple();
+}
+
+function leftMovement() {
+    const headPosition = calculatePositionOfHead();
+    const xPos = headPosition.x;
+    const yPos = headPosition.y;
+
+    // Left movement means that marginLeft px value will decrease each frame
+    let newXPos = xPos - 20;
+
+    const playerLeft = newXPos;
+    // check if player's left edge is outside of screen
+    if (playerLeft < 0) {
+        alert("Game over!");
+        clearInterval(intervalFunction);
+        location.reload();
+    } else {
+        const newHeadPosition = {x: newXPos, y: yPos};
+        updateSnakeBody(newHeadPosition);
+    }
+
+    checkCollisionWithSelfAndApple();
+}
+
+function rightMovement() {
+    const headPosition = calculatePositionOfHead();
+    const xPos = headPosition.x;
+    const yPos = headPosition.y;
+
+    // Right movement means that marginLeft px value will increase each frame
+    let newXPos = xPos + 20;
+
+    // + 20 for position + width of square
+    const playerRight = newXPos + 20;
+    // check if player's right edge is outside of screen
+    if (playerRight > 500) {
+        alert("Game over!");
+        clearInterval(intervalFunction);
+        location.reload();
+    } else {
+        const newHeadPosition = {x: newXPos, y: yPos};
+        updateSnakeBody(newHeadPosition);
+    }
+
+    checkCollisionWithSelfAndApple();
+}
+
+// Checks if snake has collided with itself or the apple in the movement functions
+function checkCollisionWithSelfAndApple() {
+    // The other way to lose the game is by colliding with self
+    if (didCollideWithSelf()) {
+        // Stop any movement functions and refresh page 
+        alert("Game over!");
+        clearInterval(intervalFunction);
+        location.reload();
+    }
+    // Check if snake has collided with apple
+    if (didCollideWithApple()) {
+        removeApple();
+        increaseSize();
+        generateApple();
+    }
+}
+
+// Returns true if snake's head position matches any of its body's positions
 function didCollideWithSelf() {
-    // console.log(snakeArray);
     const headPosition = snakeArray[0]
     let didCollideWithSelf = false;
+    // Loop through to check if snake's head position matches its body's positions
     for (let i = 1; i < snakeArray.length; i++) {
         // https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
         if (headPosition.x == snakeArray[i].x && headPosition.y == snakeArray[i].y) {
@@ -357,6 +279,34 @@ function didCollideWithSelf() {
         }
     }
     return didCollideWithSelf;
+}
+
+// Run when snake collides with apple, adds a new segment to the snake using lastPosition
+function increaseSize() {
+    const element = document.querySelector('.screen');
+
+    let newTailX, newTailY;
+    newTailX = lastPosition.x;
+    newTailY = lastPosition.y;
+
+    const newBodySegment = {x: newTailX, y: newTailY};
+    // Push to snake array a new snake segment represented by position object from lastPosition
+    snakeArray.push(newBodySegment);
+
+    // Add new segment of snake to our screen visually through HTML
+    const index = snakeArray.length - 1;
+    // https://stackoverflow.com/questions/5677799/how-to-append-data-to-div-using-javascript
+    element.innerHTML += '<div id="body' + index + '" style="background-color: orange; position:absolute; width:18px; height:18px; margin-left:' + newTailX + 'px; margin-top:' + newTailY + 'px; border: black solid 1px;"></div>';
+}
+
+// Returns true if snake's head positon matches the apple's position
+function didCollideWithApple() {
+    const headPosition = snakeArray[0]
+    let didCollideWithApple = false;
+    if (headPosition.x == applePosition.x && headPosition.y == applePosition.y) {
+        didCollideWithApple = true;
+    }
+    return didCollideWithApple;
 }
 
 // Sets the position of the apple visually and logically in applePosition object
@@ -373,25 +323,16 @@ function generateApple() {
     
     applePosition["x"] = randomXPosition;
     applePosition["y"] = randomYPosition;
-    // console.log(applePosition);
 
     // Set the apple visually or in HTML
     const element = document.getElementById('screen');
     element.innerHTML += '<div id="apple" style="background-color: red; position:absolute; width:20px; height:20px; margin-left:' + randomXPosition + 'px; margin-top:' + randomYPosition + 'px;"></div>';
 }
 
+// Remove the apple element from our screen, done when we need to generate a new apple
 function removeApple() {
     // https://www.w3schools.com/jsref/met_node_removechild.asp
     const apple = document.getElementById("apple");
     const parent = document.querySelector('.screen');
     parent.removeChild(apple);
-}
-
-function didCollideWithApple() {
-    const headPosition = snakeArray[0]
-    let didCollideWithApple = false;
-    if (headPosition.x == applePosition.x && headPosition.y == applePosition.y) {
-        didCollideWithApple = true;
-    }
-    return didCollideWithApple;
 }
