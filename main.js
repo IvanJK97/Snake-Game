@@ -41,7 +41,7 @@ document.addEventListener("keydown", inputKeyPressed, false);
 // Checks for what key has been pressed, then calls the corresponding movement function
 // https://stackoverflow.com/questions/12153357/how-to-register-document-onkeypress-event
 function inputKeyPressed(event) {
-
+    event.preventDefault();
     const keyCode = event.keyCode;
     // enums for valid button keycodes
     const buttonKeys = {
@@ -140,12 +140,16 @@ function inputKeyPressed(event) {
         }
     }
     else if (keyCode == buttonKeys.SPACEBAR) {
-        // Pauses the game by clearing previous movement function
-        alert("Paused! Try arrow keys to restart.");
-        // Need to store movement before pausing, presents a problem if moving left, pause/unpause, then move right
-        movementBeforePause = lastMovement;
-        lastMovement = "Space";
-        clearInterval(intervalFunction);
+        if (lastMovement == "Space") {
+            // Do nothing since the game is already paused
+        } else {
+            // Pauses the game by clearing previous movement function
+            alert("Paused! Try arrow keys to restart.");
+            // Need to store movement before pausing, presents a problem if moving left, pause/unpause, then move right
+            movementBeforePause = lastMovement;
+            lastMovement = "Space";
+            clearInterval(intervalFunction);
+        }
     }
     else {
     }
@@ -170,7 +174,7 @@ function upMovement() {
         alert("Game over! Game will restart if you click ok.");
         // Stop any movement functions and refresh page 
         clearInterval(intervalFunction);
-        location.reload();
+        restartGame();
     } else {
         const newHeadPosition = {x: xPos, y: newYPos};
         /*  Updates snake array by setting each index to be the index in front of it so snake "moves forward" and snake head in array with new position
@@ -236,7 +240,7 @@ function downMovement() {
     if (playerBottom > 500) {
         alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
-        location.reload();
+        restartGame();
     } else {
         const newHeadPosition = {x: xPos, y: newYPos};
         updateSnakeBody(newHeadPosition); 
@@ -258,7 +262,7 @@ function leftMovement() {
     if (playerLeft < 0) {
         alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
-        location.reload();
+        restartGame();
     } else {
         const newHeadPosition = {x: newXPos, y: yPos};
         updateSnakeBody(newHeadPosition);
@@ -281,7 +285,7 @@ function rightMovement() {
     if (playerRight > 500) {
         alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
-        location.reload();
+        restartGame();
     } else {
         const newHeadPosition = {x: newXPos, y: yPos};
         updateSnakeBody(newHeadPosition);
@@ -297,7 +301,7 @@ function checkCollisionWithSelfAndApple() {
         // Stop any movement functions and refresh page 
         alert("Game over! Game will restart if you click ok.");
         clearInterval(intervalFunction);
-        location.reload();
+        restartGame();
     }
     // Check if snake has collided with apple
     if (didCollideWithApple()) {
@@ -376,4 +380,57 @@ function removeApple() {
     const apple = document.getElementById("apple");
     const parent = document.querySelector('.screen');
     parent.removeChild(apple);
+}
+
+// Remove the apple element from our screen, for when game restarts
+function removeSnake() {
+    // Remove the snake's head
+    const player = document.getElementById('player');
+    const parent = document.querySelector('.screen');
+    parent.removeChild(player);
+
+    for (let i = 1; i < snakeArray.length; i++) {
+        const body = document.getElementById('body' + i);
+        parent.removeChild(body);
+    }
+}
+
+// Instead of reloading page, restart game by removing old snake and apple and adding new snake/apple
+function restartGame() {
+    // Reset variables by removing them
+    removeApple();
+    removeSnake();
+    lastMovement = "None";
+    movementBeforePause = "None";
+    snakeArray = [];
+
+    // Sets the position of the apple visually and logically in applePosition object
+    generateApple();
+
+    // Reset the position of snake's head - player
+    const element = document.getElementById('screen');
+    element.innerHTML += '<div id="player" class="player" style="position: absolute; background-color: orange; margin-left: 240px; margin-top: 100px; width: 18px; height: 18px; border: black solid 1px; border-radius: 5px;"></div>';
+
+    // Snake should initially have length of 3
+    element.innerHTML += '<div id="body1" class="body1" style="position: absolute; background-color: orange; margin-left: 240px; margin-top: 100px; width: 18px; height: 18px; border: black solid 1px;"></div>';
+    element.innerHTML += '<div id="body2" class="body2" style="position: absolute; background-color: orange; margin-left: 240px; margin-top: 80px; width: 18px; height: 18px; border: black solid 1px;"></div>';
+
+    downMovement();
+
+    const headPosition = calculatePositionOfHead();
+    // Snake should have length of 3
+    const body1Position = {
+        x: headPosition.x,
+        y: headPosition.y - squareSize
+    }
+    const body2Position = {
+        x: headPosition.x,
+        y: headPosition.y - (squareSize * 2)
+    }
+
+    snakeArray[0] = headPosition;
+    snakeArray[1] = body1Position;
+    snakeArray[2] = body2Position;
+    intervalFunction = setInterval(downMovement, 500);
+    lastMovement = "Down";
 }
