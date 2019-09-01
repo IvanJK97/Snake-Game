@@ -1,9 +1,10 @@
 # SnakeGame
 Browser version of the classic minigame "Snake". Will be done just using plain HTML, JavaScript, CSS. Goal is to get the apple without colliding with snake's body or edge of screen.
-You can play the game by cloning the repo, extracting it, and clicking on the HTML file. This should then launch on the browser.
+You can play the game at Codepen: https://codepen.io/IvanKok/pen/JQzwEW
+You can also clone the repo and clicking on the HTML file. This should then launch on the browser.
 Short gif of the game:
 
-![](GameDemo.gif)
+![](SnakeGameDemo.gif)
 
 Please let me know if there are any issues, bugs, improvements, or questions about this! This has been a fun practice and I hope to make more games in the future.
 
